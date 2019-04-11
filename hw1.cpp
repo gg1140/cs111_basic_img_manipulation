@@ -24,56 +24,21 @@ Mat convert2grey(Mat color_img) {
     return bw_img;
 }
 
-/* val[1] green <- val[0] blue
- * val[2] red <- val[1] green
- * val[0] blue <- val[2] red
- */
 Mat swap_color_channels(Mat og_img) {
-    Mat new_img(og_img.rows, og_img.cols, CV_8UC1);
+    Mat new_img(og_img.rows, og_img.cols, CV_8UC3);
 
     for (int i = 0; i < og_img.rows; i++) {
         for (int j = 0; j < og_img.cols; j++) {
             Vec3b pixel = og_img.at<Vec3b>(i, j);
-            Vec3b new_pixel = {pixel[2], pixel[0], pixel[1]};
+            Vec3b new_pixel = {pixel[1], pixel[0], pixel[2]}; //Switching green with blue
+
+            //Vec3b new_pixel = {pixel[0], pixel[2], pixel[1]}; //Switching red with green
+
+            //Vec3b new_pixel = {pixel[2], pixel[1], pixel[0]}; //Switching blue with red
             new_img.at<Vec3b>(i, j) = new_pixel;
         }
     }
     return new_img;
-}
-
-/*
- * This function only behavior properly when:
- * 1. an black & white image was given
- * 2. the size of image is at least 2x2
- * 3. the kernal/filter dimension is 3x3
- */
-void BoxFilterGray3(Mat og_bw_img) {
-    auto edge = [c=og_bw_img.cols-1, r=og_bw_img.rows-1](int x, int y) {
-        return (x == 0 || x == c || y == 0 || y == r);
-    };
-    Mat new_img(og_bw_img.rows, og_bw_img.cols, CV_8UC1);
-    int kernal_dim = 3;
-    //int* kernal = malloc(sizeof(int) * kernal_dim * kernal_dim);
-/*
-    for (int i = 1; i < (og_bw_img.rows - 1); i++) {
-        for (int j = 1; j < (og_bw_img.cols - 1); j++) {
-            uchar pixel = og_bw_img.at<uchar>(i, j);
-            printf("%d\n", pixel);
-            kernal[1][1] = pixel;
-            kernal[0][0] = og_bw_img.at<uchar>(i - 1, j - 1);
-
-        }
-    }
-*/
-    for (int i = 1; i < (og_bw_img.cols - 1); i++) {
-        //top and bottom edges
-    }
-
-    for (int i = 1; i < (og_bw_img.rows - 1); i++) {
-        //left and right edges
-    }
-
-    return;
 }
 
 int reflect(Mat img, int x, int y) {
@@ -94,53 +59,59 @@ int reflect(Mat img, int x, int y) {
     } else if (over_bound(y, img.cols - 1)) {
         new_y = reflect_over(y, img.cols);
     }
-    //printf("%d,%d\n", new_x, new_y);
     return img.at<int>(new_x, new_y);
 }
 
-void fill_kernal3(Mat kernal, Mat img, int mid_x, int mid_y) {
+Mat fill_kernal3(Mat img, int mid_x, int mid_y) {
     auto out_bound = [c=img.cols-1, r=img.rows-1](int x, int y) {
         return (x < 0 || x > r || y < 0 || y > c);
     };
     int offset_x = mid_x - 1;
     int offset_y = mid_y - 1;
-
+    Mat kernal(3, 3, CV_8UC1);
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             int lin_ind = i*3 + j;
             int temp_x = offset_x + i;
             int temp_y = offset_y + j;
-            //printf("x:%d y:%d ind:%d\n", offset_x + i, offset_y + j, lin_ind);
             if (out_bound(temp_x, temp_y)) {
-                kernal.at<int>(i, j) = reflect(img, temp_x, temp_y);
-                //kernal[lin_ind] = img.at<uchar>(temp_x, temp_y);
-                //printf("%d,%d -> %d\n", temp_x, temp_y, reflect(img, temp_x, temp_y));
+                kernal.at<uchar>(i, j) = reflect(img, temp_x, temp_y);
+                //kernal.at<uchar>(i, j) = 0; uncomment this for zero padding
             } else {
-                kernal.at<int>(i, j) = (int)img.at<int>(temp_x, temp_y);
+                kernal.at<uchar>(i, j) = img.at<uchar>(temp_x, temp_y);
             }
         }
     }
+    return kernal;
 }
 
 /*
-void mirror_padding(int* kern, int rows, int cols) {
-    auto corner = [c=og_bw_img.cols-1, r=og_bw_img.rows-1](int x, int y) {
-        return (x == 0 && (y == 0 || y == r)) ||
-            (x == r && (y == 0 || y == r));
-    };
-    int cross_ind[4][2] = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}}; //veritcal horizontal neighbour
-    int dia_ind[4][2] = {{-1, -1}, {1, -1}, {-1, 1}, {1, 1}}; //diagonal neighbour
-    int* new_kern = malloc(sizeof(int) * rows * cols);
-
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            cout << kern[i*cols + j];
+ * This function only behavior properly when:
+ * 1. an black & white image was given
+ * 2. the size of image is at least 2x2
+ * 3. the kernal/filter dimension is 3x3
+ */
+Mat BoxFilterGray3(Mat og_bw_img) {
+    /*auto edge = [c=og_bw_img.cols-1, r=og_bw_img.rows-1](int x, int y) {
+        return (x == 0 || x == c || y == 0 || y == r);
+    };*/
+    Mat new_img(og_bw_img.rows, og_bw_img.cols, CV_8UC1);
+    //Mat1i kernal(kernal_dim, kernal_dim, CV_8UC1);
+    for (int i = 0; i < og_bw_img.rows; i++) {
+        for (int j = 0; j < og_bw_img.cols; j++) {
+            Mat kernal = fill_kernal3(og_bw_img, i, j);
+            int sum = 0;
+            for (int s = 0; s < 3; s++) {
+                for (int t = 0; t < 3; t++) {
+                    sum += kernal.at<uchar>(s, t);
+                }
+            }
+            new_img.at<uchar>(i, j) = uchar(sum / 9.0);
         }
-        cout << endl;
     }
+    return new_img;
 }
-*/
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         printf("specify image path\n");
@@ -148,35 +119,19 @@ int main(int argc, char** argv) {
     }
 
     Mat og_img;
-    og_img = imread(argv[1], IMREAD_COLOR);//CV_LOAD_IMAGE_COLOR);
-    //printf("number of channels = %i", og_img.channels());
+    og_img = imread(argv[1], IMREAD_COLOR);//IMREAD_GRAYSCALE);
+
     if (!og_img.data) {
         printf("No image data \n");
         return -1;
     }
-    int testarr[] = {-1, -1, -1, -1, 3, 4, -1, 5, 6};//3x4
-    Mat1i testmat = (Mat1i(3, 3) << 3, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-    Mat1i testkern(3, 3, CV_8UC1);
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            printf("%d|", testmat.at<int>(i, j));
-        }
-        cout << endl;
-    }
-    //reflect(testmat, 0, 3);
-    fill_kernal3(testkern, testmat, 2, 2);
-    //mirror_padding(testarr, 3, 4);
-    /*if (argc = 3) {
+
+    Mat new_img = swap_color_channels(og_img);
+
+    if (argc = 3) {
         imwrite(argv[2], new_img);
     } else {
         imwrite("new.jpg", new_img);
-    }*/
-
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            printf("%d|", testkern.at<int>(i, j));
-        }
-        cout << endl;
     }
     return 0;
 }
