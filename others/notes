@@ -1,0 +1,98 @@
+1|2|3
+4|5|6
+7|8|9
+
+Assume picture is size is bigger or equal to my filter size
+Corner Cases:
+0|0|0 5|5|6
+0|5|6 5|5|6
+0|8|9 8|8|9
+
+0|0|0 
+4|5|0 
+7|8|0 
+
+0|2|3 
+0|5|6 
+0|0|0 
+
+1|2|0 
+4|5|0 
+0|0|0 
+
+Regular edge case:
+
+0|0|0
+x|x|x
+x|x|x
+
+x|x|x
+x|x|x
+0|0|0
+
+x|x|0
+x|x|0
+x|x|0
+
+0|x|x
+0|x|x
+0|x|x
+
+Image smaller then my filter size:
+
+partially surrounded case:
+0|0|0
+0|x|x
+0|0|0
+
+0|0|0
+x|x|0
+0|0|0
+
+0|0|0
+0|x|0
+0|x|0
+
+0|x|0
+0|x|0
+0|0|0
+
+complete surrounded case:
+0|0|0
+0|x|0
+0|0|0
+
+corner case:
+0|0|0
+0|x|x
+0|x|x
+
+0|0|0
+x|x|0
+x|x|0
+
+0|x|x
+0|x|x
+0|0|0
+
+x|x|0
+x|x|0
+0|0|0
+
+Detecting missing pixel:
+assuming image is always a square
+0|0|0
+0|x|x
+0|x|x
+
+0|0|0
+x|x|0
+x|x|0
+
+0|x|x
+0|x|x
+0|0|0
+
+x|x|0
+x|x|0
+0|0|0
