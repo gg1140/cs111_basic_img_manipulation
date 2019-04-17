@@ -1,0 +1,4 @@
+1. Added a new Convol_sum function to reflect learnt concept "output side convolution, convolution machine."
+2. Changed fill_kernal to gather_samples function
+3. Added templates
+4. gather_samples, reflect, convol_sum methods are now usable with varying kernal size
